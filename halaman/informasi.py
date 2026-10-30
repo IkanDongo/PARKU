@@ -5,8 +5,7 @@ st.set_page_config(page_title="Informasi", layout="wide")
 
 st.title("Informasi PARKU")
 
-# IDENTITAS APLIKASI
-
+#informasi ttg aplkasi
 col1 = st.columns(1)[0]
 
 with col1:
@@ -40,7 +39,7 @@ with col1:
 
         st.divider()
 
-        # KEGUNAAN APLIKASI
+        # kegunaan aplikasi
         
         st.subheader("Kegunaan Aplikasi")
 
@@ -90,3 +89,21 @@ with col1:
 
         st.write("**Pembimbing 2:**")
         st.write("Novario Jaya Perdana, S.Kom., M.T.")
+
+        st.divider()
+
+        st.subheader("Manual Book")
+
+        st.write(
+            "Unduh manual book untuk melihat panduan penggunaan "
+            "aplikasi PARKU."
+        )
+
+        with open("assets/MANUALBOOK_NOEL.pdf", "rb") as file:
+            st.download_button(
+                label="📥 Download Manual Book",
+                data=file,
+                file_name="User_Manual_Book_PARKU.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )

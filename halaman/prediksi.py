@@ -19,10 +19,7 @@ st.set_page_config(page_title="Prediksi", layout="wide")
 st.title("Prediksi Harga Daging Ayam")
 
 
-# ============================================================
-# MENGAMBIL DATA DARI SUPABASE
-# ============================================================
-
+#ambil data dri supabase
 semua_data = []
 mulai = 0
 ukuran = 1000
@@ -48,30 +45,7 @@ dataX = data[kolom_x].astype(float).values
 dataY = data[kolom_y].astype(float).values.reshape(-1, 1)
 
 
-# ============================================================
-# PERHITUNGAN FAKTOR INFLASI RAGAM
-# ============================================================
-
-X_vif = pd.DataFrame(dataX, columns=kolom_x)
-X_vif_const = sm.add_constant(X_vif)
-
-vif = {}
-
-for i, kolom in enumerate(X_vif_const.columns):
-    if kolom == "const":
-        continue
-
-    nilai_vif = variance_inflation_factor(
-        X_vif_const.to_numpy(),
-        i
-    )
-
-    vif[kolom] = nilai_vif
-
-
-# ============================================================
-# PEMBAGIAN DATA TRAINING DAN TESTING 80:20
-# ============================================================
+#bagi data split train test 8020
 
 X_train_raw, Xtest, Y_train_raw, Ytest = train_test_split(
     dataX,
@@ -80,10 +54,7 @@ X_train_raw, Xtest, Y_train_raw, Ytest = train_test_split(
     random_state=22
 )
 
-
-# ============================================================
-# PCR DENGAN DATA TRAINING
-# ============================================================
+#pcr 
 
 X = X_train_raw
 Y = Y_train_raw
@@ -210,10 +181,7 @@ dfRes = nx - px
 msRes = ssRes / dfRes
 
 
-# ============================================================
-# HAT MATRIX DAN COOK'S DISTANCE
-# ============================================================
-
+#hat matriks dan cookdistance
 H = (
     Zmodel1
     @ np.linalg.inv(Zmodel1.T @ Zmodel1)
@@ -236,11 +204,7 @@ di = (
 di_rata = di.mean()
 cutoff = 3 * di_rata
 
-
-# ============================================================
-# MENGHAPUS OUTLIER DATA TRAINING
-# ============================================================
-
+#hapus oultier dari training data
 dataTrain = np.hstack([
     X_train_raw,
     Y_train_raw
@@ -262,10 +226,7 @@ data_bersih80 = np.array(data_bersih80)
 jumlah_outlier = len(outlier)
 
 
-# ============================================================
-# PCR DENGAN DATA TRAINING BERSIH
-# ============================================================
-
+# pcr lagi dengan data bersih
 X = data_bersih80[:, 0:p]
 Y = data_bersih80[:, p].reshape(-1, 1)
 
@@ -382,10 +343,7 @@ YhatZ = Zmodel1 @ BZ
 error = Zry - YhatZ
 
 
-# ============================================================
-# TABEL ANOVA DAN R2 TRAINING
-# ============================================================
-
+#tabel anova
 ssReg = (
     BZ.T @ (Zmodel1.T @ Zry)
 )[0, 0] - n * (Zry.mean()) ** 2
@@ -413,10 +371,7 @@ R2 = ssReg / ssTot * 100
 r2 = R2
 
 
-# ============================================================
-# EVALUASI DATA TESTING
-# ============================================================
-
+#evaluasi data testing
 nTest = Xtest.shape[0]
 
 Ztest = np.zeros((nTest, p))
@@ -458,16 +413,11 @@ YhatZTest = ZmodelTest @ BZ
 errorZtest = Zrytest - YhatZTest
 
 
-# ============================================================
-# MENGEMBALIKAN PREDIKSI KE SATUAN HARGA ASLI
-# ============================================================
-
+#kembaliin ke skala asli
 YhatAsli = YhatZTest * sdY + menY
 
 
-# ============================================================
-# EVALUASI MODEL TRAINING DAN TESTING
-# ============================================================
+#eval model
 
 r2_test = r2_score(Ytest, YhatAsli) * 100
 
@@ -483,10 +433,7 @@ mape = mean_absolute_percentage_error(
 ) * 100
 
 
-# ============================================================
-# TAMPILAN APLIKASI
-# ============================================================
-
+#tampilan aplikasi
 kiri, kanan = st.columns(2)
 
 with kiri:
@@ -577,10 +524,7 @@ with kanan:
         )
 
 
-    # ========================================================
-    # HASIL EVALUASI MODEL
-    # ========================================================
-
+  #hasil evaluasi model
     st.subheader("Hasil Evaluasi Model")
 
     with st.expander(

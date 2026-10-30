@@ -115,7 +115,7 @@ def proses_data(file):
 
     return data, dibuang
 
-# ================= PROSES DAN SIMPAN DATA =================
+#proses simpen data
 
 if st.button("Upload Data"):
     if file is None:
@@ -123,10 +123,10 @@ if st.button("Upload Data"):
     else:
         try:
             with st.spinner("Memproses dan menyimpan data..."):
-                # 1. Prapemrosesan data
+                # Prapemrosesan data
                 hasil, dibuang = proses_data(file)
 
-                # 3. Simpan langsung ke Supabase
+                # Simpan langsung ke Supabase
                 records = hasil.to_dict("records")
 
                 for i in range(0, len(records), 500):
