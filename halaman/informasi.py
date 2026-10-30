@@ -12,7 +12,7 @@ col1 = st.columns(1)[0]
 with col1:
     with st.container(border=True):
         st.image(
-            "D:/SKRIPSI_/pythontest1/Web/assets/logountar.png",
+            "assets/logountar.png",
             width=250
         )
 
