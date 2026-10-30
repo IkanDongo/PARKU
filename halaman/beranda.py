@@ -21,21 +21,21 @@ st.header("Berita")
 kol1, kol2, kol3 = st.columns(3)
 with kol1:
     with st.container(border=True, height="stretch",):
-        st.image("D:/SKRIPSI_/pythontest1/Web/assets/beras.jpeg", width=600)
+        st.image("assets/beras.jpeg", width=600)
         st.markdown("**Berita 1**")
         st.write("Harga Beras Bisa Tembus Rp 20.000/Kg Jika RI Terus-terusan Impor")
         st.markdown("[Baca Selengkapnya](https://finance.detik.com/berita-ekonomi-bisnis/d-8648335/harga-beras-bisa-tembus-rp-20-000-kg-jika-ri-terus-terusan-impor)")
 
 with kol2:
     with st.container(border=True, height="stretch",):
-        st.image("D:/SKRIPSI_/pythontest1/Web/assets/minyakgoreng.webp", width=600)
+        st.image("assets/minyakgoreng.webp", width=600)
         st.markdown("**Berita 2**")
         st.write("Berlaku Mulai Besok, Harga Minyak Goreng Rp 14.000 Per Liter")
         st.markdown("[Baca Selengkapnya](https://nasional.kontan.co.id/news/berlaku-mulai-besok-harga-minyak-goreng-rp-14000-per-liter)")
 
 with kol3:
     with st.container(border=True, height="stretch",):
-        st.image("D:/SKRIPSI_/pythontest1/Web/assets/dagingsapi.jpeg", width=600)
+        st.image("assets/dagingsapi.jpeg", width=600)
         st.markdown("**Berita 3**")
         st.write("BPS Catat Harga Daging Sapi Tembus Rp200 Ribu per Kg Awal Agustus Ini")
         st.markdown("[Baca Selengkapnya](https://www.cnnindonesia.com/ekonomi/20260810115114-92-1390517/bps-catat-harga-daging-sapi-tembus-rp200-ribu-per-kg-awal-agustus-ini)")
