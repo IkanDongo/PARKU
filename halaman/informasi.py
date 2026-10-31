@@ -101,7 +101,7 @@ with col1:
 
         with open("assets/MANUALBOOK_NOEL.pdf", "rb") as file:
             st.download_button(
-                label="📥 Download Manual Book",
+                label="Download Manual Book",
                 data=file,
                 file_name="User_Manual_Book_PARKU.pdf",
                 mime="application/pdf",
