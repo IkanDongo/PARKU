@@ -532,57 +532,40 @@ with kanan:
         )
 
     # Hasil evaluasi model
-    st.subheader("Hasil Evaluasi Model")
-
-    with st.expander(
-        "Evaluasi Model RKU",
-        expanded=False
+    if tombol and all(
+        nilai > 0
+        for nilai in [beras, minyak, gula, sapi, telur]
     ):
 
-        if tombol:
+        st.subheader("Hasil Evaluasi Model")
 
-            e1, e2 = st.columns(2)
+        e1, e2 = st.columns(2)
 
-            e1.metric(
-                "R²",
-                f"{r2_test:.2f}%"
-            )
+        e1.metric(
+            "R²",
+            f"{r2_test:.2f}%"
+        )
 
-            e2.metric(
-                "MAPE",
-                f"{mape:.2f}%"
-            )
+        e2.metric(
+            "MAPE",
+            f"{mape:.2f}%"
+        )
 
-            st.divider()
+        st.divider()
 
-            e3, e4, e5 = st.columns(3)
+        e3, e4, e5 = st.columns(3)
 
-            e3.metric(
-                "MAE",
-                f"Rp {mae:,.2f}"
-            )
+        e3.metric(
+            "MAE",
+            f"Rp {mae:,.2f}"
+        )
 
-            e4.metric(
-                "RMSE",
-                f"Rp {rmse:,.2f}"
-            )
+        e4.metric(
+            "RMSE",
+            f"Rp {rmse:,.2f}"
+        )
 
-            e5.metric(
-                "MSE",
-                f"{mse:,.2f}"
-            )
-
-        else:
-
-            e1, e2 = st.columns(2)
-
-            e1.metric("R²", "0.00%")
-            e2.metric("MAPE", "0.00%")
-
-            st.divider()
-
-            e3, e4, e5 = st.columns(3)
-
-            e3.metric("MAE", "Rp 0.00")
-            e4.metric("RMSE", "Rp 0.00")
-            e5.metric("MSE", "0.00")
+        e5.metric(
+            "MSE",
+            f"{mse:,.2f}"
+        )
