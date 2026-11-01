@@ -492,29 +492,40 @@ with kanan:
             telur
         ], dtype=float)
 
-        Z_baru = input_baru - men
+        # Validasi input tidak boleh 0
+        if np.any(input_baru == 0):
 
-        Zr_baru = Z_baru / np.sqrt(S.diagonal())
+            st.warning(
+                "Prediksi tidak dapat dilakukan. "
+                "Pastikan seluruh harga komoditas telah diisi "
+                "dengan nilai lebih dari 0."
+            )
 
-        W_baru = Zr_baru @ VA_Komponen
+        else:
 
-        Z_bintang_baru = W_baru @ VA_Komponen.T
+            Z_baru = input_baru - men
 
-        Z_model_baru = np.hstack([
-            np.ones((1, 1)),
-            Z_bintang_baru.reshape(1, -1)
-        ])
+            Zr_baru = Z_baru / np.sqrt(S.diagonal())
 
-        Y_prediksi_Z = Z_model_baru @ BZ
+            W_baru = Zr_baru @ VA_Komponen
 
-        hasil_prediksi = (
-            Y_prediksi_Z[0, 0] * sdY + menY
-        )
+            Z_bintang_baru = W_baru @ VA_Komponen.T
 
-        st.metric(
-            "Prediksi Harga Daging Ayam",
-            f"Rp {hasil_prediksi:,.2f} /Kg"
-        )
+            Z_model_baru = np.hstack([
+                np.ones((1, 1)),
+                Z_bintang_baru.reshape(1, -1)
+            ])
+
+            Y_prediksi_Z = Z_model_baru @ BZ
+
+            hasil_prediksi = (
+                Y_prediksi_Z[0, 0] * sdY + menY
+            )
+
+            st.metric(
+                "Prediksi Harga Daging Ayam",
+                f"Rp {hasil_prediksi:,.2f} /Kg"
+            )
 
     else:
 
@@ -523,8 +534,7 @@ with kanan:
             "Rp 0.00 /Kg"
         )
 
-
-  #hasil evaluasi model
+    # Hasil evaluasi model
     st.subheader("Hasil Evaluasi Model")
 
     with st.expander(
