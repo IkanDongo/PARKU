@@ -51,7 +51,7 @@ X_train_raw, Xtest, Y_train_raw, Ytest = train_test_split(
     dataX,
     dataY,
     test_size=0.2,
-    random_state=22
+    random_state=8264
 )
 
 #pcr 
@@ -366,9 +366,6 @@ msReg = ssReg / dfReg
 dfRes = nx - px
 msRes = ssRes / dfRes
 
-R2 = ssReg / ssTot * 100
-
-r2 = R2
 
 
 #evaluasi data testing
@@ -547,37 +544,30 @@ with kanan:
             e1, e2 = st.columns(2)
 
             e1.metric(
-                "R² Training",
-                f"{r2:.2f}%"
+                "R²",
+                f"{r2_test:.2f}%"
             )
 
             e2.metric(
-                "R² Testing",
-                f"{r2_test:.2f}%"
+                "MAPE",
+                f"{mape:.2f}%"
             )
 
             st.divider()
 
-            e3, e4 = st.columns(2)
+            e3, e4, e5 = st.columns(3)
 
             e3.metric(
-                "MAPE Testing",
-                f"{mape:.2f}%"
-            )
-
-            e4.metric(
                 "MAE",
                 f"Rp {mae:,.2f}"
             )
 
-            e5, e6 = st.columns(2)
-
-            e5.metric(
+            e4.metric(
                 "RMSE",
                 f"Rp {rmse:,.2f}"
             )
 
-            e6.metric(
+            e5.metric(
                 "MSE",
                 f"{mse:,.2f}"
             )
@@ -586,17 +576,13 @@ with kanan:
 
             e1, e2 = st.columns(2)
 
-            e1.metric("R² Training", "0.00%")
-            e2.metric("R² Testing", "0.00%")
+            e1.metric("R²", "0.00%")
+            e2.metric("MAPE", "0.00%")
 
             st.divider()
 
-            e3, e4 = st.columns(2)
+            e3, e4, e5 = st.columns(3)
 
-            e3.metric("MAPE Testing", "0.00%")
-            e4.metric("MAE", "Rp 0.00")
-
-            e5, e6 = st.columns(2)
-
-            e5.metric("RMSE", "Rp 0.00")
-            e6.metric("MSE", "0.00")
+            e3.metric("MAE", "Rp 0.00")
+            e4.metric("RMSE", "Rp 0.00")
+            e5.metric("MSE", "0.00")

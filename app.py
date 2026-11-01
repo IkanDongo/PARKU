@@ -13,7 +13,7 @@ beranda = st.Page("halaman/beranda.py", title="Beranda", default=True)
 unggah = st.Page("halaman/unggah_Data.py", title="Unggah Data")
 prediksi = st.Page("halaman/prediksi.py", title="Prediksi" )
 informasi = st.Page("halaman/informasi.py", title="Informasi")
+uji_seed = st.Page("halaman/uji_seed.py", title="Uji Seed")
 
-
-pg = st.navigation([beranda, unggah, prediksi, informasi], position="sidebar")
+pg = st.navigation([beranda, unggah, prediksi, informasi,uji_seed], position="sidebar")
 pg.run()
