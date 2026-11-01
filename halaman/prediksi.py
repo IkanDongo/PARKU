@@ -489,7 +489,6 @@ with kanan:
             telur
         ], dtype=float)
 
-        # Validasi input tidak boleh 0
         if np.any(input_baru == 0):
 
             st.warning(
@@ -498,14 +497,19 @@ with kanan:
                 "dengan nilai lebih dari 0."
             )
 
+            hasil_prediksi = 0
+            r2_tampil = 0
+            mape_tampil = 0
+            mae_tampil = 0
+            rmse_tampil = 0
+            mse_tampil = 0
+
         else:
 
             Z_baru = input_baru - men
-
             Zr_baru = Z_baru / np.sqrt(S.diagonal())
 
             W_baru = Zr_baru @ VA_Komponen
-
             Z_bintang_baru = W_baru @ VA_Komponen.T
 
             Z_model_baru = np.hstack([
@@ -519,53 +523,41 @@ with kanan:
                 Y_prediksi_Z[0, 0] * sdY + menY
             )
 
-            st.metric(
-                "Prediksi Harga Daging Ayam",
-                f"Rp {hasil_prediksi:,.2f} /Kg"
-            )
+            r2_tampil = r2_test
+            mape_tampil = mape
+            mae_tampil = mae
+            rmse_tampil = rmse
+            mse_tampil = mse
 
     else:
 
-        st.metric(
-            "Prediksi Harga Daging Ayam",
-            "Rp 0.00 /Kg"
-        )
+        hasil_prediksi = 0
+        r2_tampil = 0
+        mape_tampil = 0
+        mae_tampil = 0
+        rmse_tampil = 0
+        mse_tampil = 0
+
+    # Hasil prediksi
+    st.metric(
+        "Prediksi Harga Daging Ayam",
+        f"Rp {hasil_prediksi:,.2f} /Kg"
+    )
 
     # Hasil evaluasi model
-    if tombol and all(
-        nilai > 0
-        for nilai in [beras, minyak, gula, sapi, telur]
-    ):
+    st.subheader("Hasil Evaluasi Model")
 
-        st.subheader("Hasil Evaluasi Model")
+    with st.expander("Evaluasi Model RKU", expanded=False):
 
         e1, e2 = st.columns(2)
 
-        e1.metric(
-            "R²",
-            f"{r2_test:.2f}%"
-        )
-
-        e2.metric(
-            "MAPE",
-            f"{mape:.2f}%"
-        )
+        e1.metric("R²", f"{r2_tampil:.2f}%")
+        e2.metric("MAPE", f"{mape_tampil:.2f}%")
 
         st.divider()
 
         e3, e4, e5 = st.columns(3)
 
-        e3.metric(
-            "MAE",
-            f"Rp {mae:,.2f}"
-        )
-
-        e4.metric(
-            "RMSE",
-            f"Rp {rmse:,.2f}"
-        )
-
-        e5.metric(
-            "MSE",
-            f"{mse:,.2f}"
-        )
+        e3.metric("MAE", f"Rp {mae_tampil:,.2f}")
+        e4.metric("RMSE", f"Rp {rmse_tampil:,.2f}")
+        e5.metric("MSE", f"{mse_tampil:,.2f}")
