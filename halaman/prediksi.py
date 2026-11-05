@@ -51,7 +51,7 @@ X_train_raw, Xtest, Y_train_raw, Ytest = train_test_split(
     dataX,
     dataY,
     test_size=0.2,
-    random_state=8264
+    random_state=9707
 )
 
 #pcr 
