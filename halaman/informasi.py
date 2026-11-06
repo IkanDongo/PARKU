@@ -99,7 +99,7 @@ with col1:
             "aplikasi PARKU."
         )
 
-        with open("assets/MANUALBOOK_NOEL.pdf", "rb") as file:
+        with open("assets/535230067_Manual_Book_Parku.pdf", "rb") as file:
             st.download_button(
                 label="Download Manual Book",
                 data=file,
