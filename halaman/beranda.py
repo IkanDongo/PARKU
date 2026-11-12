@@ -17,34 +17,11 @@ st.write(
 if st.button("Mulai Prediksi"):
     st.switch_page("halaman/prediksi.py")
 
-st.header("Berita")
-kol1, kol2, kol3 = st.columns(3)
-with kol1:
-    with st.container(border=True, height="stretch",):
-        st.image("assets/beras.jpeg", width=600)
-        st.markdown("**Berita 1**")
-        st.write("Harga Beras Bisa Tembus Rp 20.000/Kg Jika RI Terus-terusan Impor")
-        st.markdown("[Baca Selengkapnya](https://finance.detik.com/berita-ekonomi-bisnis/d-8648335/harga-beras-bisa-tembus-rp-20-000-kg-jika-ri-terus-terusan-impor)")
-
-with kol2:
-    with st.container(border=True, height="stretch",):
-        st.image("assets/minyakgoreng.webp", width=600)
-        st.markdown("**Berita 2**")
-        st.write("Berlaku Mulai Besok, Harga Minyak Goreng Rp 14.000 Per Liter")
-        st.markdown("[Baca Selengkapnya](https://nasional.kontan.co.id/news/berlaku-mulai-besok-harga-minyak-goreng-rp-14000-per-liter)")
-
-with kol3:
-    with st.container(border=True, height="stretch",):
-        st.image("assets/dagingsapi.jpeg", width=600)
-        st.markdown("**Berita 3**")
-        st.write("BPS Catat Harga Daging Sapi Tembus Rp200 Ribu per Kg Awal Agustus Ini")
-        st.markdown("[Baca Selengkapnya](https://www.cnnindonesia.com/ekonomi/20260810115114-92-1390517/bps-catat-harga-daging-sapi-tembus-rp200-ribu-per-kg-awal-agustus-ini)")
-
 st.divider()
 
-kolom_matriks, kolom_grafik = st.columns([1, 1])
+kiri, kanan = st.columns([4, 6])
 
-with kolom_matriks:
+with kiri:
     st.header("Matriks Korelasi")
     st.write(
         "Klik nilai korelasi untuk melihat grafik perbandingan harga dua komoditas.")
@@ -70,10 +47,11 @@ while True:
 
 data = pd.DataFrame(semua_data)
 
-# Memilih kolom prediktor dan target
+# Memilih kolom prediktor, target, dan tanggal
 kolom_plot = kolom_x + [kolom_y]
 data_plot = data[kolom_plot].copy()
 
+data_tanggal = data["tanggal"].copy()
 
 # Mengganti nama kolom agar mudah dibaca
 nama_kolom = {
@@ -114,7 +92,7 @@ fig = go.Figure(
         mode="markers+text",
         text=[f"{v:.2f}" for v in nilai_korelasi],
         textposition="middle center",
-        textfont=dict(size=11),
+        textfont=dict(size=18,color="white"),
         customdata=[
             [y, x, v]
             for (y, x), v in zip(pasangan, nilai_korelasi)
@@ -123,7 +101,7 @@ fig = go.Figure(
             symbol="square",
             size=42,
             color=nilai_korelasi,
-            colorscale="RdBu_r",
+            # colorscale="RdBu_r",
             cmin=-1,
             cmax=1,
             showscale=True,
@@ -174,7 +152,7 @@ fig.update_layout(
     ),
 )
 # Menampilkan matriks yang bisa diklik
-with kolom_matriks:
+with kiri:
     hasil = st.plotly_chart(
         fig,
         width="stretch",
@@ -188,7 +166,7 @@ with kolom_matriks:
     )
 
 # Membaca sel yang dipilih
-with kolom_grafik:
+with kanan:
     st.header("Grafik Komoditas")
 
     titik_dipilih = hasil.selection.points
@@ -213,31 +191,94 @@ with kolom_grafik:
                 st.write(
                     f"Grafik Garis: {variabel_x} dan {variabel_y}"
                 )
+                # # Menampilkan nilai korelasi Pearson
+                # st.metric(
+                #     label="Korelasi",
+                #     value=f"{pearson:.4f}"
+                # )
+                # if abs(pearson) >= 0.80:
+                #     tingkat = "Sangat kuat"
+                # elif abs(pearson) >= 0.60:
+                #     tingkat = "Kuat"
+                # elif abs(pearson) >= 0.40:
+                #     tingkat = "Sedang"
+                # elif abs(pearson) >= 0.20:
+                #     tingkat = "Rendah"
+                # else:
+                #     tingkat = "Sangat rendah"
 
+                # arah = "Positif" if pearson > 0 else "Negatif" if pearson < 0 else "Tidak ada arah hubungan"
 
+                # st.caption(f"Tingkat korelasi: {tingkat} ({arah})")
+
+                # Membuat grafik garis dari dua komoditas yang dipilih
+                # Membuat grafik garis dari dua komoditas yang dipilih
                 # Membuat grafik garis dari dua komoditas yang dipilih
                 data_garis = data_plot[
                     [variabel_x, variabel_y]
-                ].reset_index(drop=True)
+                ].copy()
 
-                data_garis.index.name = "Urutan Observasi"
+                data_garis.insert(0, "tanggal", data_tanggal)
+
+                data_garis["tanggal"] = pd.to_datetime(data_garis["tanggal"])
+                data_garis = data_garis.sort_values("tanggal")
 
                 fig_garis = px.line(
                     data_garis,
+                    x="tanggal",
                     y=[variabel_x, variabel_y],
                     labels={
-                        "index": "Urutan Observasi",
+                        "tanggal": "Tanggal",
                         "value": "Harga (Rp/kg)",
                         "variable": "Komoditas",
                     },
+                    color_discrete_sequence=["#2563EB", "#DC2626"],
                 )
 
                 fig_garis.update_layout(
-                    legend_title_text="Komoditas",
-                    hovermode="x unified",
-                )
+                hovermode="x unified",
+                legend=dict(
+                    title_text="Komoditas",
+                    orientation="h",
+                    yanchor="top",
+                    y=-0.25,
+                    xanchor="center",
+                    x=0.5,
+                ),       
+                xaxis=dict(
+                    tickformat="%d-%m-%Y",
+                    dtick="M1",
+                    tickangle=-45,
+                ),
+            )
 
                 st.plotly_chart(
                     fig_garis,
                     width="stretch",
                 )
+
+st.divider()    
+st.header("Berita")
+kol1, kol2, kol3 = st.columns(3)
+with kol1:
+    with st.container(border=True, height="stretch",):
+        st.image("assets/beras.jpeg", width=600)
+        st.markdown("**Berita 1**")
+        st.write("Harga Beras Bisa Tembus Rp 20.000/Kg Jika RI Terus-terusan Impor")
+        st.markdown("[Baca Selengkapnya](https://finance.detik.com/berita-ekonomi-bisnis/d-8648335/harga-beras-bisa-tembus-rp-20-000-kg-jika-ri-terus-terusan-impor)")
+
+with kol2:
+    with st.container(border=True, height="stretch",):
+        st.image("assets/minyakgoreng.webp", width=600)
+        st.markdown("**Berita 2**")
+        st.write("Berlaku Mulai Besok, Harga Minyak Goreng Rp 14.000 Per Liter")
+        st.markdown("[Baca Selengkapnya](https://nasional.kontan.co.id/news/berlaku-mulai-besok-harga-minyak-goreng-rp-14000-per-liter)")
+
+with kol3:
+    with st.container(border=True, height="stretch",):
+        st.image("assets/dagingsapi.jpeg", width=600)
+        st.markdown("**Berita 3**")
+        st.write("BPS Catat Harga Daging Sapi Tembus Rp200 Ribu per Kg Awal Agustus Ini")
+        st.markdown("[Baca Selengkapnya](https://www.cnnindonesia.com/ekonomi/20260810115114-92-1390517/bps-catat-harga-daging-sapi-tembus-rp200-ribu-per-kg-awal-agustus-ini)")
+
+

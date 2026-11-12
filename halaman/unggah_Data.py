@@ -2,6 +2,10 @@ import streamlit as st
 import pandas as pd
 from koneksi import supabase, semua_kolom
 
+if not st.session_state.get("is_admin", False):
+    st.error("Halaman ini hanya bisa diakses oleh admin.")
+    st.stop()
+
 st.set_page_config(page_title="Unggah Data", layout="wide")
 
 st.title("Unggah Data")
