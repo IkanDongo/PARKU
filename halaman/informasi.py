@@ -94,7 +94,7 @@ with st.container(border=True):
 
     with open("assets/535230067_Manual_Book_Parku.pdf", "rb") as file:
         st.download_button(
-            label="📥 Download Manual Book",
+            label="Download Manual Book",
             data=file,
             file_name="User_Manual_Book_PARKU.pdf",
             mime="application/pdf",
