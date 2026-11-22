@@ -1,563 +1,194 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import statsmodels.api as sm
 
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import (
-    mean_absolute_error,
-    mean_squared_error,
-    mean_absolute_percentage_error,
-    r2_score
+from gaya import hero, rupiah, tanggal_id, ringkasan, grafik_fluktuasi
+from koneksi import ambil_data, kolom_x, kolom_y, label_kolom
+from model import latih_model, prediksi_harga
+
+
+hero(
+    "Prediksi Harga Daging Ayam",
+    "Masukkan harga lima komoditas pangan, lalu lihat estimasinya",
+    kecil=True,
 )
 
-from koneksi import supabase, kolom_x, kolom_y
+# font halaman ini dikecilkan (khusus halaman Prediksi)
+st.markdown(
+    """
+    <style>
+    div[data-testid="stNumberInput"] label p { font-size: 0.8rem; }
+    div[data-testid="stNumberInput"] input { font-size: 0.85rem; }
+    div[data-testid="stButton"] button p { font-size: 0.8rem; }
+    div[data-testid="stCaptionContainer"] { font-size: 0.75rem; }
+    .mini {
+        background: #FFFFFF;
+        border: 1px solid #E4DBC8;
+        border-radius: 12px;
+        padding: 0.5rem 0.75rem;
+    }
+    .mini-label { font-size: 0.7rem; font-weight: 600; color: #7A7364; }
+    .mini-nilai {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #3D3A35;
+        white-space: nowrap;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
-st.set_page_config(page_title="Prediksi", layout="wide")
-st.title("Prediksi Harga Daging Ayam")
-
-
-#ambil data dri supabase
-semua_data = []
-mulai = 0
-ukuran = 1000
-
-while True:
-    respon = (
-        supabase.table("harga_pangan")
-        .select("*")
-        .range(mulai, mulai + ukuran - 1)
-        .execute()
+def kartu_kecil(label, nilai):
+    return (
+        f'<div class="mini"><div class="mini-label">{label}</div>'
+        f'<div class="mini-nilai">{nilai}</div></div>'
     )
 
-    semua_data = semua_data + respon.data
 
-    if len(respon.data) < ukuran:
-        break
+data = ambil_data()
 
-    mulai = mulai + ukuran
+if data.empty or len(data) < 30:
+    st.info("Data di database belum cukup untuk membangun model. Hubungi admin.")
+    st.stop()
 
-data = pd.DataFrame(semua_data)
+model = latih_model(data)
 
-dataX = data[kolom_x].astype(float).values
-dataY = data[kolom_y].astype(float).values.reshape(-1, 1)
+urut = data.sort_values("tanggal")
+harga_terakhir = urut.iloc[-1]
 
+# kolom grafik yang sedang ditampilkan (default: harga daging ayam)
+if "grafik_aktif" not in st.session_state:
+    st.session_state.grafik_aktif = kolom_y
 
-#bagi data split train test 8020
+if "hasil_prediksi" not in st.session_state:
+    st.session_state.hasil_prediksi = None
 
-X_train_raw, Xtest, Y_train_raw, Ytest = train_test_split(
-    dataX,
-    dataY,
-    test_size=0.2,
-    random_state=9707
-)
 
-#pcr 
+def pilih_grafik(kolom):
+    st.session_state.grafik_aktif = kolom
 
-X = X_train_raw
-Y = Y_train_raw
 
-n, p = X.shape
+kiri, kanan = st.columns([5, 6], gap="large")
 
-men = X.mean(axis=0)
-
-Z = np.zeros((n, p))
-
-for i in range(n):
-    kurang = X[i, :] - men
-    Z[i, :] = kurang
-
-S = np.zeros((p, p))
-
-for j in range(p):
-    for k in range(p):
-        sum_cov = 0
-        for i in range(n):
-            sum_cov = sum_cov + Z[i, j] * Z[i, k]
-
-        S[j, k] = sum_cov / (n - 1)
-
-Zr = np.zeros((n, p))
-
-for i in range(n):
-    for j in range(p):
-        Zr[i, j] = Z[i, j] / np.sqrt(S[j, j])
-
-Zcov = np.zeros((p, p))
-
-for j in range(p):
-    for k in range(p):
-        sum_cov = 0
-
-        for i in range(n):
-            sum_cov = sum_cov + Zr[i, j] * Zr[i, k]
-
-        Zcov[j, k] = sum_cov / (n - 1)
-
-D, V = np.linalg.eigh(Zcov)
-
-DA_urut = np.zeros((p, p))
-VA_urut = np.zeros((p, p))
-
-m = 0
-
-for i in range(p - 1, -1, -1):
-    DA_urut[m, m] = D[i]
-    VA_urut[:, m] = V[:, i]
-    m = m + 1
-
-eValue = np.zeros((p, 1))
-
-for i in range(p):
-    eValue[i, 0] = DA_urut[i, i]
-
-Total = eValue.sum()
-
-PK = 0
-komponen = 0
-
-for j in range(p):
-    proporsiValue = eValue[j, 0] / Total
-
-    if PK < 0.95:
-        PK = PK + proporsiValue
-        komponen = komponen + 1
-
-VA_Komponen = VA_urut[:, 0:komponen]
-
-W = Zr @ VA_Komponen
-
-menY = Y.mean()
-sdY = np.std(Y, ddof=1)
-
-Zy = np.zeros((n, 1))
-
-for i in range(n):
-    kurang = Y[i, 0] - menY
-    Zy[i, 0] = kurang
-
-Zry = np.zeros((n, 1))
-
-for i in range(n):
-    Zry[i, 0] = Zy[i, 0] / sdY
-
-w0 = np.ones((n, 1))
-wModel1 = np.hstack([w0, W])
-
-b = np.linalg.inv(wModel1.T @ wModel1) @ (wModel1.T @ Zry)
-
-Bw0 = b[0, 0]
-Bw = b[1:, :]
-
-BdiZ = VA_Komponen @ Bw
-
-BZ = np.vstack([
-    np.array([[Bw0]]),
-    BdiZ
-])
-
-z0 = np.ones((n, 1))
-Zmodel1 = np.hstack([z0, Zr])
-
-YhatZ = Zmodel1 @ BZ
-
-error = Zry - YhatZ
-
-ssReg = (
-    BZ.T @ (Zmodel1.T @ Zry)
-)[0, 0] - n * (Zry.mean()) ** 2
-
-ssRes = (
-    Zry.T @ Zry
-)[0, 0] - (
-    BZ.T @ (Zmodel1.T @ Zry)
-)[0, 0]
-
-nx, px = Zmodel1.shape
-
-dfRes = nx - px
-msRes = ssRes / dfRes
-
-
-#hat matriks dan cookdistance
-H = (
-    Zmodel1
-    @ np.linalg.inv(Zmodel1.T @ Zmodel1)
-    @ Zmodel1.T
-)
-
-Hii = np.zeros((n, 1))
-
-for i in range(n):
-    Hii[i, 0] = H[i, i]
-
-Eii = error ** 2
-
-di = (
-    Eii / (px * msRes)
-) * (
-    Hii / (1 - Hii) ** 2
-)
-
-di_rata = di.mean()
-cutoff = 3 * di_rata
-
-#hapus oultier dari training data
-dataTrain = np.hstack([
-    X_train_raw,
-    Y_train_raw
-])
-
-outlier = []
-data_bersih80 = []
-
-for i in range(n):
-
-    if di[i, 0] > cutoff:
-        outlier.append(i + 1)
-
-    else:
-        data_bersih80.append(dataTrain[i, :])
-
-data_bersih80 = np.array(data_bersih80)
-
-jumlah_outlier = len(outlier)
-
-
-# pcr lagi dengan data bersih
-X = data_bersih80[:, 0:p]
-Y = data_bersih80[:, p].reshape(-1, 1)
-
-n = X.shape[0]
-
-men = X.mean(axis=0)
-
-Z = np.zeros((n, p))
-
-for i in range(n):
-    kurang = X[i, :] - men
-    Z[i, :] = kurang
-
-S = np.zeros((p, p))
-
-for j in range(p):
-    for k in range(p):
-        sum_cov = 0
-
-        for i in range(n):
-            sum_cov = sum_cov + Z[i, j] * Z[i, k]
-
-        S[j, k] = sum_cov / (n - 1)
-
-Zr = np.zeros((n, p))
-
-for i in range(n):
-    for j in range(p):
-        Zr[i, j] = Z[i, j] / np.sqrt(S[j, j])
-
-Zcov = np.zeros((p, p))
-
-for j in range(p):
-    for k in range(p):
-        sum_cov = 0
-
-        for i in range(n):
-            sum_cov = sum_cov + Zr[i, j] * Zr[i, k]
-
-        Zcov[j, k] = sum_cov / (n - 1)
-
-D, V = np.linalg.eigh(Zcov)
-
-DA_urut = np.zeros((p, p))
-VA_urut = np.zeros((p, p))
-
-m = 0
-
-for i in range(p - 1, -1, -1):
-    DA_urut[m, m] = D[i]
-    VA_urut[:, m] = V[:, i]
-    m = m + 1
-
-eValue = np.zeros((p, 1))
-
-for i in range(p):
-    eValue[i, 0] = DA_urut[i, i]
-
-Total = eValue.sum()
-
-PK = 0
-komponen = 0
-
-proporsi = np.zeros(p)
-
-for j in range(p):
-
-    proporsi[j] = eValue[j, 0] / Total
-
-    if PK < 0.90:
-        PK = PK + proporsi[j]
-        komponen = komponen + 1
-
-proporsi_kumulatif = np.cumsum(proporsi)
-
-VA_Komponen = VA_urut[:, 0:komponen]
-
-W = Zr @ VA_Komponen
-
-menY = Y.mean()
-sdY = np.std(Y, ddof=1)
-
-Zy = np.zeros((n, 1))
-
-for i in range(n):
-    kurang = Y[i, 0] - menY
-    Zy[i, 0] = kurang
-
-Zry = np.zeros((n, 1))
-
-for i in range(n):
-    Zry[i, 0] = Zy[i, 0] / sdY
-
-w0 = np.ones((n, 1))
-wModel1 = np.hstack([w0, W])
-
-b = np.linalg.inv(wModel1.T @ wModel1) @ (wModel1.T @ Zry)
-
-Bw0 = b[0, 0]
-Bw = b[1:, :]
-
-BdiZ = VA_Komponen @ Bw
-
-BZ = np.vstack([
-    np.array([[Bw0]]),
-    BdiZ
-])
-
-z0 = np.ones((n, 1))
-Zmodel1 = np.hstack([z0, Zr])
-
-YhatZ = Zmodel1 @ BZ
-
-error = Zry - YhatZ
-
-
-#tabel anova
-ssReg = (
-    BZ.T @ (Zmodel1.T @ Zry)
-)[0, 0] - n * (Zry.mean()) ** 2
-
-ssRes = (
-    Zry.T @ Zry
-)[0, 0] - (
-    BZ.T @ (Zmodel1.T @ Zry)
-)[0, 0]
-
-ssTot = (
-    Zry.T @ Zry
-)[0, 0] - n * (Zry.mean()) ** 2
-
-nx, px = Zmodel1.shape
-
-dfReg = px - 1
-msReg = ssReg / dfReg
-
-dfRes = nx - px
-msRes = ssRes / dfRes
-
-
-
-#evaluasi data testing
-nTest = Xtest.shape[0]
-
-Ztest = np.zeros((nTest, p))
-
-for i in range(nTest):
-    for j in range(p):
-        Ztest[i, j] = Xtest[i, j] - men[j]
-
-Zrtest = np.zeros((nTest, p))
-
-for i in range(nTest):
-    for j in range(p):
-        Zrtest[i, j] = Ztest[i, j] / np.sqrt(S[j, j])
-
-Wtest = Zrtest @ VA_Komponen
-
-ZBintangTest = Wtest @ VA_Komponen.T
-
-Zytest = np.zeros((nTest, 1))
-
-for i in range(nTest):
-    kurang = Ytest[i, 0] - menY
-    Zytest[i, 0] = kurang
-
-Zrytest = np.zeros((nTest, 1))
-
-for i in range(nTest):
-    Zrytest[i, 0] = Zytest[i, 0] / sdY
-
-z0test = np.ones((nTest, 1))
-
-ZmodelTest = np.hstack([
-    z0test,
-    ZBintangTest
-])
-
-YhatZTest = ZmodelTest @ BZ
-
-errorZtest = Zrytest - YhatZTest
-
-
-#kembaliin ke skala asli
-YhatAsli = YhatZTest * sdY + menY
-
-
-#eval model
-
-r2_test = r2_score(Ytest, YhatAsli) * 100
-
-mae = mean_absolute_error(Ytest, YhatAsli)
-
-mse = mean_squared_error(Ytest, YhatAsli)
-
-rmse = np.sqrt(mse)
-
-mape = mean_absolute_percentage_error(
-    Ytest,
-    YhatAsli
-) * 100
-
-
-#tampilan aplikasi
-kiri, kanan = st.columns(2)
-
+# ---------------- kiri: input harga ----------------
 with kiri:
-
-    st.subheader("Input Harga Komoditas")
-
-    with st.form("form_prediksi"):
-
-        beras = st.number_input(
-            "Harga Beras (Rp/kg)",
-            min_value=0,
-            step=100
+    with st.container(border=True):
+        st.subheader("Input Harga Komoditas")
+        st.caption(
+            "Isi harga setiap komoditas. Tekan tombol 📈 di samping kolom "
+            "untuk melihat grafik fluktuasi harganya."
         )
 
-        minyak = st.number_input(
-            "Harga Minyak Goreng (Rp/kg)",
-            min_value=0,
-            step=100
-        )
+        for kolom in kolom_x:
+            nama = label_kolom[kolom]
 
-        gula = st.number_input(
-            "Harga Gula Pasir (Rp/kg)",
-            min_value=0,
-            step=100
-        )
+            st.number_input(
+                f"Harga {nama} (Rp/kg)",
+                min_value=0,
+                step=100,
+                key=f"input_{kolom}",
+                help=f"Harga terakhir di data: {rupiah(harga_terakhir[kolom])}",
+            )
 
-        sapi = st.number_input(
-            "Harga Daging Sapi (Rp/kg)",
-            min_value=0,
-            step=100
-        )
+            # tombol fluktuasi tepat di bawah input
+            aktif = st.session_state.grafik_aktif == kolom
+            st.button(
+                f"Fluktuasi Harga {nama}",
+                key=f"tombol_{kolom}",
+                type="primary" if aktif else "secondary",
+                width="stretch",
+                on_click=pilih_grafik,
+                args=(kolom,),
+            )
 
-        telur = st.number_input(
-            "Harga Telur Ayam (Rp/kg)",
-            min_value=0,
-            step=100
-        )
+        if st.button("Prediksi Harga", type="primary", width="stretch"):
+            input_baru = [st.session_state[f"input_{k}"] for k in kolom_x]
 
-        tombol = st.form_submit_button(
-            "Prediksi Harga",
-            use_container_width=True
-        )
+            if any(v == 0 for v in input_baru):
+                st.session_state.hasil_prediksi = {"error": True}
+            else:
+                st.session_state.hasil_prediksi = {
+                    "error": False,
+                    "nilai": prediksi_harga(model, input_baru),
+                }
 
+#bagian kanan
+hasil = st.session_state.hasil_prediksi
 
 with kanan:
+    with st.container():
+        st.subheader("Hasil Prediksi")
 
-    st.subheader("Hasil Prediksi")
+        if hasil is None or hasil["error"]:
+            if hasil is not None and hasil["error"]:
+                st.warning(
+                    "Prediksi tidak dapat dilakukan. "
+                    "Pastikan seluruh harga komoditas telah diisi "
+                    "dengan nilai lebih dari 0."
+                )
 
-    if tombol:
-
-        input_baru = np.array([
-            beras,
-            minyak,
-            gula,
-            sapi,
-            telur
-        ], dtype=float)
-
-        if np.any(input_baru == 0):
-
-            st.warning(
-                "Prediksi tidak dapat dilakukan. "
-                "Pastikan seluruh harga komoditas telah diisi "
-                "dengan nilai lebih dari 0."
+            st.markdown(
+                '<div class="hasil-kartu hasil-kosong">'
+                '<div class="hasil-label">Prediksi Harga Daging Ayam</div>'
+                '<div class="hasil-nilai">Rp -</div>'
+                '<div class="hasil-delta">Isi form lalu tekan "Prediksi Harga"</div>'
+                "</div>",
+                unsafe_allow_html=True,
             )
-
-            hasil_prediksi = 0
-            r2_tampil = 0
-            mape_tampil = 0
-            mae_tampil = 0
-            rmse_tampil = 0
-            mse_tampil = 0
-
         else:
+            nilai = hasil["nilai"]
+            selisih = nilai - harga_terakhir[kolom_y]
+            panah = "▲" if selisih >= 0 else "▼"
 
-            Z_baru = input_baru - men
-            Zr_baru = Z_baru / np.sqrt(S.diagonal())
-
-            W_baru = Zr_baru @ VA_Komponen
-            Z_bintang_baru = W_baru @ VA_Komponen.T
-
-            Z_model_baru = np.hstack([
-                np.ones((1, 1)),
-                Z_bintang_baru.reshape(1, -1)
-            ])
-
-            Y_prediksi_Z = Z_model_baru @ BZ
-
-            hasil_prediksi = (
-                Y_prediksi_Z[0, 0] * sdY + menY
+            st.markdown(
+                '<div class="hasil-kartu">'
+                '<div class="hasil-label">Prediksi Harga Daging Ayam</div>'
+                f'<div class="hasil-nilai">{rupiah(nilai, 2)} /Kg</div>'
+                f'<div class="hasil-delta">{panah} {rupiah(abs(selisih))} '
+                f"dibanding harga terakhir di data "
+                f"({tanggal_id(harga_terakhir['tanggal'])}: "
+                f"{rupiah(harga_terakhir[kolom_y])})</div>"
+                "</div>",
+                unsafe_allow_html=True,
             )
 
-            r2_tampil = r2_test
-            mape_tampil = mape
-            mae_tampil = mae
-            rmse_tampil = rmse
-            mse_tampil = mse
+        st.caption(
+            "Hasil prediksi merupakan estimasi berdasarkan data historis, "
+            "bukan kepastian harga."
+        )
 
-    else:
+    st.write("")
 
-        hasil_prediksi = 0
-        r2_tampil = 0
-        mape_tampil = 0
-        mae_tampil = 0
-        rmse_tampil = 0
-        mse_tampil = 0
+    with st.container():
+        kolom_grafik = st.session_state.grafik_aktif
+        nama_grafik = label_kolom[kolom_grafik]
 
-    # Hasil prediksi
-    st.metric(
-        "Prediksi Harga Daging Ayam",
-        f"Rp {hasil_prediksi:,.2f} /Kg"
-    )
+        st.subheader(f"Fluktuasi Harga {nama_grafik}")
 
-    # Hasil evaluasi model
-    st.subheader("Hasil Evaluasi Model")
+        # garis putus-putus hanya untuk hasil prediksi harga ayam
+        garis = None
+        nama_garis = "Prediksi"
 
-    with st.expander("Evaluasi Model RKU", expanded=False):
+        if kolom_grafik == kolom_y:
+            if hasil is not None and not hasil["error"]:
+                garis = hasil["nilai"]
 
-        e1, e2 = st.columns(2)
+        st.plotly_chart(
+            grafik_fluktuasi(data, kolom_grafik, nama_grafik,
+                                garis=garis, nama_garis=nama_garis),
+            width="stretch",
+        )
 
-        e1.metric("R²", f"{r2_tampil:.2f}%")
-        e2.metric("MAPE", f"{mape_tampil:.2f}%")
+        r = ringkasan(data, kolom_grafik)
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Terakhir", rupiah(r["terakhir"]))
+        m2.metric("Rata-rata", rupiah(r["rata"]))
+        m3.metric("Tertinggi", rupiah(r["maks"]))
+        m4.metric("Terendah", rupiah(r["min"]))
 
-        st.divider()
-
-        e3, e4, e5 = st.columns(3)
-
-        e3.metric("MAE", f"Rp {mae_tampil:,.2f}")
-        e4.metric("RMSE", f"Rp {rmse_tampil:,.2f}")
-        e5.metric("MSE", f"{mse_tampil:,.2f}")
+        if kolom_grafik != kolom_y:
+            st.button(
+                "↺ Tampilkan harga daging ayam",
+                on_click=pilih_grafik,
+                args=(kolom_y,),
+            )

@@ -1,32 +1,23 @@
-
 import streamlit as st
 
-st.set_page_config(page_title="Informasi", layout="wide")
+from gaya import hero
 
-st.title("Informasi PARKU")
+hero(
+    "Informasi PARKU",
+    "Prediksi Harga Daging Ayam Berdasarkan Harga Sembako "
+    "Menggunakan Metode Regresi Komponen Utama",
+    kecil=True,
+)
 
 #informasi ttg aplkasi
-col1 = st.columns(1)[0]
+with st.container(border=True):
+    kol_logo, kol_teks = st.columns([1, 4], vertical_alignment="center")
 
-with col1:
-    with st.container(border=True):
-        st.image(
-            "assets/logountar.png",
-            width=250
-        )
+    with kol_logo:
+        st.image("assets/logountar.png")
 
-        st.divider()
-
-        st.markdown(
-            """
-            <h3>
-            PREDIKSI HARGA DAGING AYAM BERDASARKAN HARGA SEMBAKO
-            MENGGUNAKAN METODE REGRESI KOMPONEN UTAMA
-            </h3>
-            """,
-            unsafe_allow_html=True
-        )
-
+    with kol_teks:
+        st.subheader("Tentang PARKU")
         st.write(
             """
             PARKU (Prediksi Ayam dengan Regresi Komponen Utama)
@@ -37,42 +28,45 @@ with col1:
             """
         )
 
-        st.divider()
+# kegunaan aplikasi
+with st.container(border=True):
+    st.subheader("Kegunaan Aplikasi")
 
-        # kegunaan aplikasi
-        
-        st.subheader("Kegunaan Aplikasi")
+    st.write(
+        """
+        Perubahan harga bahan pangan dapat menimbulkan pertanyaan
+        mengenai kemungkinan perubahan harga komoditas pangan lainnya,
+        termasuk daging ayam. PARKU dikembangkan untuk membantu pengguna
+        memperoleh estimasi harga daging ayam berdasarkan harga beberapa
+        komoditas pangan yang dimasukkan ke dalam aplikasi.
+        """
+    )
 
-        st.write(
-            """
-            Perubahan harga bahan pangan dapat menimbulkan pertanyaan
-            mengenai kemungkinan perubahan harga komoditas pangan lainnya,
-            termasuk daging ayam. PARKU dikembangkan untuk membantu pengguna
-            memperoleh estimasi harga daging ayam berdasarkan harga beberapa
-            komoditas pangan yang dimasukkan ke dalam aplikasi.
-            """
-        )
+    st.markdown(
+        """
+        Melalui aplikasi ini, pengguna dapat:
+        - **Memperkirakan harga daging ayam** berdasarkan harga
+        komoditas pangan yang dimasukkan.
+        - **Mengetahui estimasi harga daging ayam** ketika terdapat
+        perubahan harga pada komoditas prediktor.
+        - **Melihat fluktuasi harga** setiap komoditas pada halaman Prediksi.
+        """
+    )
 
-        st.markdown(
-            """
-            Melalui aplikasi ini, pengguna dapat:
-            - **Memperkirakan harga daging ayam** berdasarkan harga
-            komoditas pangan yang dimasukkan.
-            - **Mengetahui estimasi harga daging ayam** ketika terdapat
-            perubahan harga pada komoditas prediktor.
-            """
-        )
+    st.info(
+        """
+        Hasil prediksi merupakan estimasi berdasarkan model RKU
+        yang dibangun dari data historis, bukan kepastian bahwa
+        harga daging ayam akan naik atau turun. Harga aktual juga
+        dapat dipengaruhi oleh faktor lain, seperti permintaan,
+        pasokan, biaya produksi, dan distribusi.
+        """
+    )
 
-        st.info(
-            """
-            Hasil prediksi merupakan estimasi berdasarkan model RKU
-            yang dibangun dari data historis, bukan kepastian bahwa
-            harga daging ayam akan naik atau turun. Harga aktual juga
-            dapat dipengaruhi oleh faktor lain, seperti permintaan,
-            pasokan, biaya produksi, dan distribusi.
-            """
-        )
-        st.divider()
+kiri, kanan = st.columns(2, gap="large")
+
+with kiri:
+    with st.container(border=True, height="stretch"):
         st.subheader("Dikembangkan oleh")
 
         st.write("**Noel Liman**")
@@ -80,8 +74,8 @@ with col1:
         st.write("Program Studi: Teknik Informatika")
         st.write("Universitas Tarumanagara")
 
-        st.divider()
-
+with kanan:
+    with st.container(border=True, height="stretch"):
         st.subheader("Dibimbing oleh")
 
         st.write("**Pembimbing 1:**")
@@ -90,20 +84,19 @@ with col1:
         st.write("**Pembimbing 2:**")
         st.write("Novario Jaya Perdana, S.Kom., M.T.")
 
-        st.divider()
+with st.container(border=True):
+    st.subheader("Manual Book")
 
-        st.subheader("Manual Book")
+    st.write(
+        "Unduh manual book untuk melihat panduan penggunaan "
+        "aplikasi PARKU."
+    )
 
-        st.write(
-            "Unduh manual book untuk melihat panduan penggunaan "
-            "aplikasi PARKU."
+    with open("assets/535230067_Manual_Book_Parku.pdf", "rb") as file:
+        st.download_button(
+            label="📥 Download Manual Book",
+            data=file,
+            file_name="User_Manual_Book_PARKU.pdf",
+            mime="application/pdf",
+            width="stretch",
         )
-
-        with open("assets/535230067_Manual_Book_Parku.pdf", "rb") as file:
-            st.download_button(
-                label="Download Manual Book",
-                data=file,
-                file_name="User_Manual_Book_PARKU.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
