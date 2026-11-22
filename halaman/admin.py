@@ -236,8 +236,8 @@ with tab_model:
         e1, e2, e3, e4, e5 = st.columns(5)
         e1.metric("R²", f"{model['r2']:.2f}%")
         e2.metric("MAPE", f"{model['mape']:.2f}%")
-        e3.metric("MAE", rupiah(model["mae"]))
-        e4.metric("RMSE", rupiah(model["rmse"]))
+        e3.metric("MAE", f"{model['mae']:,.2f}")
+        e4.metric("RMSE", f"{model['rmse']:,.2f}")
         e5.metric("MSE", f"{model['mse']:,.2f}")
 
         st.write("")
